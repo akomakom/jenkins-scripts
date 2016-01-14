@@ -11,6 +11,8 @@ import jenkins.maven.*;
  *   2) Create a new job with the original name, type freeStyleProject, rearranging the pre/maven/post into the main builders of the new job
  * 
  * Currently does not support folders (yet?)
+ * 
+ * USAGE: use as an "Execute System Groovy Script" step
  */
   
 Jenkins.instance.items.findAll{job -> job instanceof MavenModuleSet && job.JDK && job.JDK.name.indexOf('1.6') > 0 && !job.isDisabled() }.each{
