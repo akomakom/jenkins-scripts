@@ -9,7 +9,7 @@ maven-to-freestyle.groovy
 * Jenkins > 1.609 no longer supports JDK 1.6 and neither do Maven projects. 
 * Moves old jobs out of the way and creates new ones.
 * Does not use the REST API, works directly with groovy by retrieving and modifying job XML
-* To use, create a job with an "Execute System Groovy Script" step.
+* To use, create a job with an "Execute System Groovy Script" step. Recommended config: DRY_RUN boolean parameter, archive *.xml for reference.
 
 
 maven-to-freestyle-jobdsl.groovy
