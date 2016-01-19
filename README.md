@@ -7,8 +7,15 @@ maven-to-freestyle.groovy
 -----------------------
 * Jenkins groovy script to convert Maven projects that use JDK 1.6 to freestyle projects. 
 * Jenkins > 1.609 no longer supports JDK 1.6 and neither do Maven projects. 
-* Moves old jobs out of the way and creates new ones.
 * Does not use the REST API, works directly with jenkins by retrieving and modifying job XML live
+
+What it does:
+* Moves old jobs out of the way and creates new ones using the old name
+* Keeps the XML unchanged except:
+  * moves all prebuilders to builders (unchanged)
+  * moves maven main step to builders, losing some settings that are not supported in a maven build step.
+  * moves all postbuilders to builders (unchanged)
+  * keeps publishers and everything else unchanged.
 
 To use:
 
