@@ -1,3 +1,7 @@
+/**
+ * maven-to-freestyle.groovy
+ * See https://github.com/akomakom/jenkins-scripts for details
+ */
 import groovy.xml.*;
   
 import hudson.model.*;
