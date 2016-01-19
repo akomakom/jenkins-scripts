@@ -4,37 +4,45 @@ import hudson.model.*;
 import hudson.maven.*;
 import jenkins.model.*;
 import jenkins.maven.*;
+import hudson.*;
   
-/**
- * For all enabled maven jobs tied to JDK 1.6:
- *   1) Disable and rename to DEPRECATED-X
- *   2) Create a new job with the original name, type freeStyleProject, rearranging the pre/maven/post into the main builders of the new job
- * 
- * Currently does not support folders (yet?)
- * 
- * USAGE: use as an "Execute System Groovy Script" step
- */
-  
+def makeChanges = (build.buildVariableResolver.resolve("DRY_RUN") == "false")
+if (!makeChanges) {
+  println "\n\nDry run mode, add boolean build param 'DRY_RUN' to control\n\n"
+}
+
+def count = 0
 Jenkins.instance.items.findAll{job -> job instanceof MavenModuleSet && job.JDK && job.JDK.name.indexOf('1.6') > 0 && !job.isDisabled() }.each{
 job ->
-  println(job.name)
+  count++
+  println("\nBegin Processing ${job.name}")
   oldName = job.name
   
   xml = getModifiedXml(job)
   
-  println "Converted ${job.name}: \n${xml}\n\n"
+  // write old and new configurations to files for historical reference
+  getWorkspaceFile("${job.name}-config.old.xml").write(job.getConfigFile().asString(), null)
+  getWorkspaceFile("${job.name}-config.new.xml").write(xml, null)
   
-  //rename old job
-  job.renameTo("DEPRECATED-${job.name}")
-  job.makeDisabled(true)
+  println "Processed ${job.name}, new xml size is ${xml.length()}"
   
-  //now 
-  //push to a new job (can't overwrite with different job type)
-  inputStream = new StringBufferInputStream(xml)
-  Jenkins.instance.createProjectFromXML(oldName, inputStream)
-  println "Renamed and converted ${oldName}"
+  
+  if (makeChanges) {
+      
+    //rename old job
+    job.renameTo("DEPRECATED-${job.name}")
+    job.makeDisabled(true)
+    
+    //now 
+    //push to a new job (can't overwrite with different job type)
+    inputStream = new StringBufferInputStream(xml)
+    Jenkins.instance.createProjectFromXML(oldName, inputStream)
+    println "Renamed and converted ${oldName}"
+  }  
   
 }
+println "\nProcessing completed, ${count} jobs visited\n\n"
+
 
 
 def getModifiedXml(job) {
@@ -46,12 +54,12 @@ def getModifiedXml(job) {
   
   
   // Move prebuilders to builders
-  response.prebuilders[0].children().each{ step ->
-    builders.append(step)
-    
+  if (response.prebuilders && response.prebuilders[0]) {
+    response.prebuilders[0].children().each{ step ->
+      builders.append(step)
+    }
+    response.remove(response.prebuilders[0])
   }
-  response.remove(response.prebuilders[0])
-  
   
   //Create a maven block
   mavenNode = builders.appendNode(
@@ -91,11 +99,14 @@ def getModifiedXml(job) {
   
   
   // Move postbuilders to builders
-  response.postbuilders[0].children().each{ step ->
-    builders.append(step)
-    
+  if (response.postbuilders && response.postbuilders[0]) {
+    response.postbuilders[0].children().each{ step ->
+      builders.append(step)
+    }
+    response.remove(response.postbuilders[0])
   }
-  response.remove(response.postbuilders[0])
+  
+  
   
   
   //rename top-level element
@@ -122,12 +133,28 @@ def remove(from, listOfNames) {
 
 
 def move(from, to, toName = null) {
-  if (toName == null) {
-    //just move it, no name change
-    from.parent().remove(from)
-    to.append(from)
-  } else {
-    to.appendNode(new QName(toName), from.attributes(), from.value())
-	from.parent().remove(from)
+  // if source is null, we don't need to do anything
+  if (from) {
+    if (toName == null) {
+      //just move it, no name change
+      from.parent().remove(from)
+      to.append(from)
+    } else {
+      to.appendNode(new QName(toName), from.attributes(), from.value())
+      from.parent().remove(from)
+    }
   }
+}
+
+def getWorkspaceFile(name) {
+ 
+  if(build.workspace.isRemote())
+  {
+      channel = build.workspace.channel;
+      fp = new FilePath(channel, build.workspace.toString() + "/" + name)
+  } else {
+      fp = new FilePath(new File(build.workspace.toString() + "/" + name))
+  }
+  
+  return fp
 }
