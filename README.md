@@ -14,6 +14,8 @@ maven-to-freestyle.groovy
 
 maven-to-freestyle-jobdsl.groovy
 -----------------------
+NOTE: this approach is deprecated, it's here for reference only.
+
 * Jenkins Job DSL script to convert Maven projects that use JDK 1.6 to freestyle projects. 
 * Jenkins > 1.609 no longer supports JDK 1.6 and neither do Maven projects. 
 * Creates new projects named ?_F. 
