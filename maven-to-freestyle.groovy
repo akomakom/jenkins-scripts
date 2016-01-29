@@ -1,7 +1,30 @@
 /**
- * maven-to-freestyle.groovy
- * See https://github.com/akomakom/jenkins-scripts for details
- */
+  maven-to-freestyle.groovy
+  See https://github.com/akomakom/jenkins-scripts for details
+
+This script converts Maven jobs that rely on unsupported JDK version (1.6) to FreeStyle jobs.
+It is meant to be run as a System Groovy Script
+
+Configuration options (via jenkins job parameters)
+DRY_RUN (boolean) - do not make changes
+MODE (choice) - either 'RENAME' or 'KEEP'.  values:
+  RENAME: rename matching jobs to "DEPRECATED-X", create new jobs with the original name
+  KEEP: leave the old job alone, create new jobs named "X.new"
+DISABLE (boolean) - disable old job after processing.  
+  DISABLE=false and MODE=keep will allow this script be run over and over while testing.
+
+
+What this actually does:
+1) moves maven job's prebuilders to steps
+2) moves the main maven configuration to a maven build step (some config is lost as it's not supported)
+3) moves maven job's postbuilders to steps
+4) keeps everything else the same, including publishers, properties, etc.
+5) attempts to take any maven-inferred downstream releationships (pom dependencies) and keep them 
+ as static job relationships for the new jobs.  Note that in KEEP mode, these relationships will point to the original name.
+
+*/
+
+
 import groovy.xml.*;
   
 import hudson.model.*;
@@ -11,9 +34,15 @@ import jenkins.maven.*;
 import hudson.*;
   
 def makeChanges = (build.buildVariableResolver.resolve("DRY_RUN") == "false")
+def mode = build.buildVariableResolver.resolve("MODE")
+def disable = (build.buildVariableResolver.resolve("DISABLE") == "true")
+
 if (!makeChanges) {
   println "\n\nDry run mode, add boolean build param 'DRY_RUN' to control\n\n"
 }
+println "MODE is ${mode}, disable old jobs is ${disable}"
+
+
 
 def count = 0
 Jenkins.instance.items.findAll{job -> job instanceof MavenModuleSet && job.JDK && job.JDK.name.indexOf('1.6') > 0 && !job.isDisabled() }.each{
@@ -32,16 +61,41 @@ job ->
   
   
   if (makeChanges) {
+    
+    switch(mode) {
+      case 'RENAME':
+      	newName = oldName;
+      	
+        //rename old job
+        job.renameTo("DEPRECATED-${job.name}")
+      break
       
-    //rename old job
-    job.renameTo("DEPRECATED-${job.name}")
-    job.makeDisabled(true)
+        
+      case 'KEEP':
+        newName = "${oldName}.new"
+      	existingNewJob = Jenkins.instance.getItemByFullName(newName)
+      	if (existingNewJob) {
+          println "Job ${newName} already exists, deleting"
+          existingNewJob.delete()
+        }
+        
+      	
+      break
+    
+      default:
+        println "Unknown mode '${mode}', please add build param MODE.  Supported choices: RENAME,KEEP"
+      	return
+    }
+
+    if (disable) {
+		job.makeDisabled(true)
+    }
     
     //now 
     //push to a new job (can't overwrite with different job type)
     inputStream = new StringBufferInputStream(xml)
-    Jenkins.instance.createProjectFromXML(oldName, inputStream)
-    println "Renamed and converted ${oldName}"
+    Jenkins.instance.createProjectFromXML(newName, inputStream)
+    println "(Renamed?) and converted ${oldName} to ${newName}"
   }  
   
 }
@@ -110,7 +164,12 @@ def getModifiedXml(job) {
     response.remove(response.postbuilders[0])
   }
   
+  // If there are any inferred relationships with other maven projects,
+  // convert them to hard relationships (permanently)
+  makeBuildTriggerNode(job.getDownstreamProjects(), response.publishers[0])
   
+  
+  response.description[0].setValue(response.description[0].value + " Job was converted from a Maven project on ${new Date()}.  Any maven job relationships were converted to build triggers.")
   
   
   //rename top-level element
@@ -125,6 +184,23 @@ def getModifiedXml(job) {
   
   return XmlUtil.serialize(newDoc)
 }  
+
+
+def makeBuildTriggerNode(downstreamJobs, appendTo) {
+  if (downstreamJobs.size() == 0) {
+    return;
+  }
+  jobNames = []
+  downstreamJobs.each{ job ->
+    jobNames << job.name
+  }
+
+  root = new groovy.util.Node(appendTo, "hudson.tasks.BuildTrigger")
+  new groovy.util.Node(root, 'childProjects', jobNames.join(', '))
+  // not adding the rest of the values since defaults should work?
+  
+  return root;
+}
 
 
 def remove(from, listOfNames) {
