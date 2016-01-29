@@ -21,7 +21,7 @@ To use:
 
 * Create a job with an "Execute ***System*** Groovy Script" step.  Paste in the code.
 * Job must run on master (if you remove file archiving you can run it on slaves)
-* Recommended config: DRY_RUN boolean parameter, archive *.xml for reference.
+* Read the top of the comments in script for options
 * Run in DRY_RUN mode and review workspace xml (old and new).  If changes look good, run for real.
 
 
