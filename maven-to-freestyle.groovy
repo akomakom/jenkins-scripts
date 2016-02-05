@@ -6,12 +6,17 @@ This script converts Maven jobs that rely on unsupported JDK version (1.6) to Fr
 It is meant to be run as a System Groovy Script
 
 Configuration options (via jenkins job parameters)
+
 DRY_RUN (boolean) - do not make changes
+
 MODE (choice) - Possible values:
-  RENAME: rename matching jobs to "DEPRECATED-X", create new jobs with the original name
-  KEEP: leave the old job alone, create new jobs named "X.new"
+  RENAME: rename matching jobs to "DEPRECATED-X", create new jobs with the original name (some relationships may point to disabled jobs)
+  DELETE: delete old job, then create new one with the old name.  Solves wrong project relationship issues. Back up everything!
+  KEEP: leave the old job alone, create new jobs named "X.new" 
+
 DISABLE (boolean) - disable old job after processing.  
-  DISABLE=false and MODE=keep will allow this script be run over and over while testing.
+  DISABLE=false and MODE=keep will allow this script be run over and over while testing
+
 FOLDER (string) - restrict processing to the named folder (Cloudbees Folder Plugin).  Use "TOP" to disable folder processing (top-level only).
 
 
@@ -89,12 +94,18 @@ job ->
   if (makeChanges) {
     
     switch(mode) {
+      
+      case 'DELETE':
+      	job.delete()
+      	newName = oldName
+      	break
+          
       case 'RENAME':
-      	newName = oldName;
+      	newName = oldName
       	
         //rename old job
         job.renameTo("DEPRECATED-${job.name}")
-      break
+      	break
       
         
       case 'KEEP':
@@ -105,8 +116,7 @@ job ->
           existingNewJob.delete()
         }
         
-      	
-      break
+      	break
     
       default:
         println "Unknown mode '${mode}', please add build param MODE.  Supported choices: RENAME,KEEP"
@@ -192,6 +202,7 @@ def getModifiedXml(job) {
   
   // If there are any inferred relationships with other maven projects,
   // convert them to hard relationships (permanently)
+  // This may result in duplicate BuildTrigger's if job had an explicit one already.
   makeBuildTriggerNode(job.getDownstreamProjects(), response.publishers[0])
   
   
