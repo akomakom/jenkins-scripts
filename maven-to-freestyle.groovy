@@ -7,11 +7,12 @@ It is meant to be run as a System Groovy Script
 
 Configuration options (via jenkins job parameters)
 DRY_RUN (boolean) - do not make changes
-MODE (choice) - either 'RENAME' or 'KEEP'.  values:
+MODE (choice) - Possible values:
   RENAME: rename matching jobs to "DEPRECATED-X", create new jobs with the original name
   KEEP: leave the old job alone, create new jobs named "X.new"
 DISABLE (boolean) - disable old job after processing.  
   DISABLE=false and MODE=keep will allow this script be run over and over while testing.
+FOLDER (string) - restrict processing to the named folder.  Use "TOP" to disable folder processing (top-level only).
 
 
 What this actually does:
@@ -36,6 +37,8 @@ import hudson.*;
 def makeChanges = (build.buildVariableResolver.resolve("DRY_RUN") == "false")
 def mode = build.buildVariableResolver.resolve("MODE")
 def disable = (build.buildVariableResolver.resolve("DISABLE") == "true")
+def restrictToFolder = build.buildVariableResolver.resolve("FOLDER")
+
 
 if (!makeChanges) {
   println "\n\nDry run mode, add boolean build param 'DRY_RUN' to control\n\n"
@@ -43,13 +46,36 @@ if (!makeChanges) {
 println "MODE is ${mode}, disable old jobs is ${disable}"
 
 
+def selectFrom = Jenkins.instance.allItems
+def createIn = Jenkins.instance
+
+if (restrictToFolder != null && restrictToFolder != '') {
+  
+  if (restrictToFolder == 'TOP') {
+    selectFrom = Jenkins.instance.items
+    println "Restricting execution to the top level and ignoring folders"
+  } else { 
+    
+    createIn = Jenkins.instance.getItemByFullName(restrictToFolder)
+    if (createIn == null) {
+      println "Folder not found"
+      return
+    }    
+    
+    selectFrom = createIn.items
+    println "Restricting execution to folder ${restrictToFolder}, found ${selectFrom.size()} items"
+  }
+}
+
 
 def count = 0
-Jenkins.instance.items.findAll{job -> job instanceof MavenModuleSet && job.JDK && job.JDK.name.indexOf('1.6') > 0 && !job.isDisabled() }.each{
+selectFrom.findAll{job -> job instanceof MavenModuleSet && job.JDK && job.JDK.name.indexOf('1.6') > 0 && !job.isDisabled() }.each{
 job ->
   count++
-  println("\nBegin Processing ${job.name}")
+  println("\nBegin Processing ${job.fullName}")
+  
   oldName = job.name
+  createIn = job.parent
   
   xml = getModifiedXml(job)
   
@@ -57,7 +83,7 @@ job ->
   getWorkspaceFile("${job.name}-config.old.xml").write(job.getConfigFile().asString(), null)
   getWorkspaceFile("${job.name}-config.new.xml").write(xml, null)
   
-  println "Processed ${job.name}, new xml size is ${xml.length()}"
+  println "Processed ${job.fullName}, new xml size is ${xml.length()}"
   
   
   if (makeChanges) {
@@ -73,7 +99,7 @@ job ->
         
       case 'KEEP':
         newName = "${oldName}.new"
-      	existingNewJob = Jenkins.instance.getItemByFullName(newName)
+      	existingNewJob = createIn.getItem(newName)
       	if (existingNewJob) {
           println "Job ${newName} already exists, deleting"
           existingNewJob.delete()
@@ -94,7 +120,7 @@ job ->
     //now 
     //push to a new job (can't overwrite with different job type)
     inputStream = new StringBufferInputStream(xml)
-    Jenkins.instance.createProjectFromXML(newName, inputStream)
+    createIn.createProjectFromXML(newName, inputStream)
     println "(Renamed?) and converted ${oldName} to ${newName}"
   }  
   
