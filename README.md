@@ -19,7 +19,7 @@ What it does:
 
 To use:
 
-* Create a job with an "Execute ***System*** Groovy Script" step.  Paste in the code.
+* Create a job with an "Execute ***System*** Groovy Script" step.  Paste in the code or use git directly.
 * Job must run on master (if you remove file archiving you can run it on slaves)
 * Read the top of the comments in script for build parameters
 * Run in DRY_RUN mode and review workspace xml (old and new).  If changes look good, run for real.
