@@ -12,7 +12,7 @@ MODE (choice) - Possible values:
   KEEP: leave the old job alone, create new jobs named "X.new"
 DISABLE (boolean) - disable old job after processing.  
   DISABLE=false and MODE=keep will allow this script be run over and over while testing.
-FOLDER (string) - restrict processing to the named folder.  Use "TOP" to disable folder processing (top-level only).
+FOLDER (string) - restrict processing to the named folder (Cloudbees Folder Plugin).  Use "TOP" to disable folder processing (top-level only).
 
 
 What this actually does:
