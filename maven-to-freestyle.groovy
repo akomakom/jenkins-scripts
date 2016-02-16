@@ -18,6 +18,7 @@ DISABLE (boolean) - disable old job after processing.
   DISABLE=false and MODE=keep will allow this script be run over and over while testing
 
 FOLDER (string) - restrict processing to the named folder (Cloudbees Folder Plugin).  Use "TOP" to disable folder processing (top-level only).
+VIEW (string) - restrict processing to items in the named view.  Use DRY_RUN to check what will be processed
 
 
 What this actually does:
@@ -43,6 +44,7 @@ def makeChanges = (build.buildVariableResolver.resolve("DRY_RUN") == "false")
 def mode = build.buildVariableResolver.resolve("MODE")
 def disable = (build.buildVariableResolver.resolve("DISABLE") == "true")
 def restrictToFolder = build.buildVariableResolver.resolve("FOLDER")
+def restrictToView = build.buildVariableResolver.resolve("VIEW")
 
 
 if (!makeChanges) {
@@ -52,7 +54,7 @@ println "MODE is ${mode}, disable old jobs is ${disable}"
 
 
 def selectFrom = Jenkins.instance.allItems
-def createIn = Jenkins.instance
+def createIn
 
 if (restrictToFolder != null && restrictToFolder != '') {
   
@@ -61,15 +63,25 @@ if (restrictToFolder != null && restrictToFolder != '') {
     println "Restricting execution to the top level and ignoring folders"
   } else { 
     
-    createIn = Jenkins.instance.getItemByFullName(restrictToFolder)
-    if (createIn == null) {
+    def folder = Jenkins.instance.getItemByFullName(restrictToFolder)
+    if (folder == null) {
       println "Folder not found"
       return
     }    
     
-    selectFrom = createIn.items
+    selectFrom = folder.items
     println "Restricting execution to folder ${restrictToFolder}, found ${selectFrom.size()} items"
   }
+} else if (restrictToView != null && restrictToView != '') {
+  
+	def view = Hudson.instance.getView(restrictToView)
+  	if(view == null) {
+    	println "View ${restrictToView} not found"
+    	return
+  	}
+ 
+	selectFrom = view.getItems()
+  	println "Restricting execution to view ${restrictToView}, found ${selectFrom.size()} items"
 }
 
 
