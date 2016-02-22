@@ -34,7 +34,7 @@ count
 
 /**
  * Set Subversion credentialsId for jobs that use a particular URL and don't currently have one set
- */
+*/
 import groovy.xml.*;
   
 import hudson.model.*;
@@ -43,32 +43,29 @@ import jenkins.model.*;
 import jenkins.maven.*;
 import hudson.*;
   
-
-def urlPrefix = 'https://svn.url.for.my.company.that.requires.auth'
-def credentialsId = 'some-string' //get from Credentials page in Jenkins (in url)
+def selectFrom = Jenkins.instance.allItems
+def credentialsId = 'some-cred-id-string'
+def svnHostname = 'svn.hostname.for.your.company'
 
 def count = 0
-Jenkins.instance.items.findAll{job ->  job instanceof Project && !job.isDisabled() }.each{ job ->
-  count++
-    //println("\nBegin Processing ${job.name} (${job.class}")
+selectFrom.findAll{job -> job instanceof AbstractProject && !job.isDisabled() && job.scm instanceof hudson.scm.SubversionSCM }.each{ job ->
   
-  job.SCMs.findAll{scm  -> scm instanceof hudson.scm.SubversionSCM }.each { scm ->
-    //println "Project ${job.name}"
-    //println("SCM: ${scm.locations}")
-    scm.locations.findAll{loc -> (loc.credentialsId == null || loc.credentialsId == '') && loc.remote.startsWith(urlPrefix)}.each { loc ->
-      println "Project ${job.name}"
-      println "Location : ${loc}"
-      println "Current Credential: ${loc.credentialsId}"
-      //set it (uncomment when ready)
-      //loc.credentialsId = credentialsId
-      
-    }
+  job.scm.locations.findAll { loc ->  
+    try { loc.SVNURL.host.startsWith(svnHostname) && (loc.credentialsId == null || loc.credentialsId == '') } catch (Exception x) { return false } 
+  }.each{ loc ->
+    
+    println "JOB ${job.name}: [cred(${loc.credentialsId})] ${loc.SVNURL}"
+    
+    // Uncomment when output looks right
+    //loc.credentialsId = credentialsId
+    count++
   }
-  
 }
 
-count
-
+count 
+ 
+ 
+ 
 
 
 
