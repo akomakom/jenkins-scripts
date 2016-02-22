@@ -56,7 +56,8 @@ selectFrom.findAll{job -> job instanceof AbstractProject && !job.isDisabled() &&
     
     println "JOB ${job.name}: [cred(${loc.credentialsId})] ${loc.SVNURL}"
     
-    // Uncomment when output looks right
+    // Uncomment both lines when output looks right.
+    //loc.credentialsId = null
     //loc.credentialsId = credentialsId
     count++
   }
