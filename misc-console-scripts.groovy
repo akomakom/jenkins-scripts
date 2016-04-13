@@ -125,3 +125,18 @@ Hudson.instance.getView("VIEW NAME").getItems().findAll{job -> job instanceof Jo
 
 true
 
+
+
+/**
+ * Change all jobs tied to a deprecated labels to a new label (for simple labels)
+ */
+ Jenkins.instance.items.findAll{job ->  job instanceof Job  && job.assignedLabel?.expression == 'OLDLABEL'}.each{
+job ->
+  
+  println "${job.assignedLabel}: ${job.assignedLabel?.class}"
+  if (job.assignedLabel instanceof hudson.model.labels.LabelAtom ) {
+    job.assignedLabel = new hudson.model.labels.LabelAtom('NEWLABEL')
+  }
+}
+
+true
