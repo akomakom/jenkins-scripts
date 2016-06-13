@@ -181,3 +181,21 @@ Hudson.instance.getView("VIEW NAME").getItems().findAll{job -> job instanceof Jo
   job.makeDisabled(true)
 }
 true
+
+
+
+
+/**
+ * Find original build in the pipeline that caused this build to be triggered
+ * (build is the current build)
+ */
+  def prevRun = build
+  def firstRun = prevRun
+
+  while (prevRun != null)  {
+    firstRun = prevRun
+    def cause = prevRun.getCause(Cause.UpstreamCause)
+    prevRun = cause?.upstreamRun
+    println "Found run: ${firstRun}"
+  }
+  
