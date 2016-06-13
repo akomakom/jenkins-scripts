@@ -198,4 +198,7 @@ true
     prevRun = cause?.upstreamRun
     println "Found run: ${firstRun}"
   }
+  //Print out overall pipeline duration (may be useful in email templates)
+  def duration = build.startTimeInMillis + build.duration - firstRun.startTimeInMillis
+  println "Duration: ${hudson.Util.getTimeSpanString(duration)}"
   
