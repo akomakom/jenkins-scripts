@@ -202,3 +202,16 @@ true
   def duration = build.startTimeInMillis + build.duration - firstRun.startTimeInMillis
   println "Duration: ${hudson.Util.getTimeSpanString(duration)}"
   
+
+
+/**
+ * Find all gradle jobs (using gradle step or calling gradle on cmd-line)
+ */
+jenkins.model.Jenkins.getActiveInstance().getAllItems(Project.class).findAll{job -> job.builders.find{builder -> builder instanceof hudson.plugins.gradle.Gradle} }.each{job ->
+  println "Found gradle job ${job.fullName}: ${job}"
+}
+jenkins.model.Jenkins.getActiveInstance().getAllItems(Project.class).findAll{job -> job.builders.find{builder -> builder instanceof hudson.tasks.CommandInterpreter && builder.command.indexOf('gradle') >= 0} }.each{job ->
+  
+  println "Found gradle job (cmd line) ${job.fullName}: ${job}"
+}
+true
