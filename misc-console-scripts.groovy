@@ -215,3 +215,12 @@ jenkins.model.Jenkins.getActiveInstance().getAllItems(Project.class).findAll{job
   println "Found gradle job (cmd line) ${job.fullName}: ${job}"
 }
 true
+
+
+/**
+ * Turn all slaves back on after being temporarily offline (such as from Unreliable Slave Plugin)
+ */
+Hudson.instance.slaves.findAll{it.computer.isOffline()}.each{def slave ->
+   def computer = slave.computer
+   computer.setTemporarilyOffline(false)
+}
