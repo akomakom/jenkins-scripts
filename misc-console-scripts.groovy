@@ -224,3 +224,22 @@ Hudson.instance.slaves.findAll{it.computer.isOffline()}.each{def slave ->
    def computer = slave.computer
    computer.setTemporarilyOffline(false)
 }
+
+
+/**
+ * Disable and move matching jobs to a subfolder
+ */
+def jenkins = Jenkins.instance
+
+def FOLDER_NAME = 'Archive'
+def JOB_NAME_START = 'some_prefix'
+def folder = jenkins.getItemByFullName(FOLDER_NAME)
+
+println "Moving to folder ${folder}"
+
+Jenkins.instance.items.findAll{job ->  job instanceof Job && job.name.startsWith(JOB_NAME_START) }.each{job ->
+  println job.name
+  job.description = "Disabled on ${new Date()} ${job.description}"
+  job.makeDisabled(true)
+  Items.move(job, folder)
+}
