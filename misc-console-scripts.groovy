@@ -248,6 +248,8 @@ Jenkins.instance.items.findAll{job ->  job instanceof Job && job.name.startsWith
 /**
  * Generate a cleanup script to remove orphaned "builds" subdirectories in disabled jobs.
  * Results can be pasted into a shell.  Threshold is in the if statement.
+ * This script assumes that all jenkins builds have already been properly deleted for the affected jobs, and it 
+ * suggests that you blindly remove any subdirectories named "builds" (which are sometimes orphaned)
  */
  Jenkins.instance.items.findAll{job -> job instanceof Job && job.isDisabled()}.each{job ->
 //  println "Job ${job.fullName}"
