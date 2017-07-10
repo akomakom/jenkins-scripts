@@ -243,3 +243,17 @@ Jenkins.instance.items.findAll{job ->  job instanceof Job && job.name.startsWith
   job.makeDisabled(true)
   Items.move(job, folder)
 }
+
+
+/**
+ * Generate a cleanup script to remove orphaned "builds" subdirectories in disabled jobs.
+ * Results can be pasted into a shell.  Threshold is in the if statement.
+ */
+ Jenkins.instance.items.findAll{job -> job instanceof Job && job.isDisabled()}.each{job ->
+//  println "Job ${job.fullName}"
+   result =  "du -s /data/jenkins/jobs/${job.fullName}".execute().text
+   parts = result.tokenize()
+   if (Integer.parseInt(parts[0]) > 10000) {
+     println "df /data ; find /data/jenkins/jobs/${job.fullName} -name builds -exec rm -rf {} \\;  ; df /data # ${parts[0]}"
+   }
+}.size()
