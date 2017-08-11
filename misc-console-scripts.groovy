@@ -239,7 +239,7 @@ println "Moving to folder ${folder}"
 
 Jenkins.instance.items.findAll{job ->  job instanceof Job && job.name.startsWith(JOB_NAME_START) }.each{job ->
   println job.name
-  job.description = "Disabled on ${new Date()} ${job.description}"
+  job.description += "Disabled on ${new Date()} ${job.description}"
   job.makeDisabled(true)
   Items.move(job, folder)
 }
