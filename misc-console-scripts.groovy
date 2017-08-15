@@ -259,3 +259,57 @@ Jenkins.instance.items.findAll{job ->  job instanceof Job && job.name.startsWith
      println "df /data ; find /data/jenkins/jobs/${job.fullName} -name builds -exec rm -rf {} \\;  ; df /data # ${parts[0]}"
    }
 }.size()
+
+
+/**
+ * Print out Test Count summaries for a whole folder, based on looking at the latest completed build of each job
+ * supports Pipeline jobs
+ */
+def summarize(def startsWith, def verbose = false) {
+  def jobs = 0
+  def jobsWithResults = 0
+  def total = 0
+  def failed = 0
+  def skipped = 0
+  
+  jenkins.model.Jenkins.getActiveInstance().getAllItems(Job).findAll{job -> !job.isDisabled() && job.fullName.startsWith(startsWith)}.each{job ->
+    if (verbose) { print "${job.fullName} => " }
+    jobs++
+    def build = job.getLastCompletedBuild()
+    if (!build) {
+        return
+    }
+    if (build.respondsTo('getTestResultAction') && build.getTestResultAction()) {
+          
+      total += build.getTestResultAction().getTotalCount()
+      failed += build.getTestResultAction().getFailCount()
+      skipped += build.getTestResultAction().getSkipCount()
+      
+      jobsWithResults++
+      if (verbose) { 
+        println "${build.getTestResultAction().getTotalCount()}: ${build.getTestResultAction().getFailCount()}, ${build.getTestResultAction().getSkipCount()}"
+      }
+      
+    } else if (build.getActions()) {
+      //println build.getActions()
+      build.getActions(hudson.tasks.junit.TestResultAction).each {action ->
+        
+        total += action.getTotalCount()
+        failed += action.getFailCount()
+        skipped += action.getSkipCount()
+        jobsWithResults++
+        if (verbose) { 
+          println "${action.getTotalCount()}: ${action.getFailCount()}/${action.getSkipCount()}"
+        }
+        
+      }
+    } else {
+      if (verbose) { 
+        println "NOTHING"
+      }
+    }
+  }
+  println "TOTAL FOR ${startsWith}:: ${jobs} Jobs (${jobsWithResults} with Test Results), Tests: ${total}: ${failed} Failed, ${skipped} Skipped"
+}
+  
+summarize('FOLDER_NAME')
