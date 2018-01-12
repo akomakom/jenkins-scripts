@@ -2,7 +2,7 @@
   maven-to-freestyle.groovy
   See https://github.com/akomakom/jenkins-scripts for details
 
-This script converts Maven jobs that rely on unsupported JDK version (1.6) to FreeStyle jobs.
+This script converts Maven jobs that rely on unsupported JDK version (1.6 and 1.7) to FreeStyle jobs.
 It is meant to be run as a System Groovy Script
 
 Configuration options (via jenkins job parameters)
@@ -28,6 +28,8 @@ What this actually does:
 4) keeps everything else the same, including publishers, properties, etc.
 5) attempts to take any maven-inferred downstream releationships (pom dependencies) and keep them 
  as static job relationships for the new jobs.  Note that in KEEP mode, these relationships will point to the original name.
+
+NOTE: JDK names are hardcoded below!
 
 */
 
@@ -86,7 +88,7 @@ if (restrictToFolder != null && restrictToFolder != '') {
 
 
 def count = 0
-selectFrom.findAll{job -> job instanceof MavenModuleSet && job.JDK && job.JDK.name.indexOf('1.6') > 0 && !job.isDisabled() }.each{
+selectFrom.findAll{job -> job instanceof MavenModuleSet && job.JDK && (job.JDK.name.indexOf('1.6') || job.JDK.name.indexOf('1.7')) > 0 && !job.isDisabled() }.each{
 job ->
   count++
   println("\nBegin Processing ${job.fullName}")
