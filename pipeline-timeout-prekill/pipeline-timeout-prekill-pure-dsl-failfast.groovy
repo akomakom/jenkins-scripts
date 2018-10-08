@@ -1,7 +1,9 @@
 /**
 * Unlike pipeline-timeout-prekill-pure-dsl.groovy,
-* this script (meant to reside in a shared library) does not need to know how to kill the main process
+* this script (meant to reside in a shared library but can be moved to a Jenkinsfile as well) 
+* does not need to know how to kill the main process
 * in fact, any pipeline steps can be used in both main and preTimeout closures.
+* This is more or less a drop-in replacement for the timeout step
 * 
 * Usage from a Jenkinsfile:
 *
@@ -12,15 +14,17 @@
         // preTimeout logic
      }
   }
+  
+  
 */
 
     /**
      * Runs the given code with given timeout.  If timeout is reached, runs preTimeout before killing
      * https://github.com/akomakom/jenkins-scripts/blob/master/pipeline-timeout-prekill/pipeline-timeout-prekill-pure-dsl.groovy
-     * @param context
-     * @param timeoutSeconds
-     * @param main
-     * @param preTimeout Closure to run before killing main steps.  Default is print JPS info for all processes
+     * @param context script context if this is used from a Library
+     * @param timeoutSeconds 
+     * @param main Closure to run the (main build)
+     * @param preTimeout Closure to run before killing main steps in case of timeout.  
      * @return
      */
     static def timeoutWithDebug(def context, int timeoutSeconds, Closure main, Closure preTimeout = null) {
