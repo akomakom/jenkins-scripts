@@ -6,4 +6,4 @@ Current status:
 * pipeline-timeout-prekill.sh : Does not seem to work in Jenkins 
 * pipeline-timeout-prekill.groovy : Does not seem to work in Jenkins 
 
-When I say "work in Jenkins", I mean that running this from within a "timeout" step causes the trap to either not run or run too late
+When I say "work in Jenkins", I mean that running this from within a "timeout" step causes the trap to either not run or run too late.  They all do, however, work when not using the timeout() {} step.  One alternative is to use the linux "timeout" command instead to run these scripts.
