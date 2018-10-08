@@ -32,7 +32,7 @@ _term() {
   kill -TERM "$child" 2>/dev/null
 }
 
-trap _term SIGTERM
+trap _term SIGTERM TERM SIGINT INT
 
 echo "Starting main subprocess ($1)";
 # Start some slow process, could just be sleep...
