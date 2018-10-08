@@ -9,11 +9,20 @@
 # for simplicity, args are:
 # $1: command to run
 # $2: command to run if being killed
-# 
+#
 # eg:
 #   bash pipeline-timeout-prekill.sh "./gradlew slow task" "killall -3 java"
 
 PREKILL="$2"  #save for _term()
+
+if [ -z "$PREKILL" ] ; then
+    PREKILL="_jps"
+fi
+
+# Default pre-kill command:
+_jps() {
+    jps -l | grep -v Jps |  while read line  ; do jstack $(echo $line | cut -d ' ' -f 1); done
+}
 
 _term() {
   echo "Caught SIGTERM signal!"
@@ -25,7 +34,7 @@ _term() {
 
 trap _term SIGTERM
 
-echo "Starting main subprocess...";
+echo "Starting main subprocess ($1)";
 # Start some slow process, could just be sleep...
 $1 &
 
