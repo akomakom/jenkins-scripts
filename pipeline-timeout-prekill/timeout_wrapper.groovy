@@ -1,7 +1,7 @@
 /**
- * Simple wrapper script for running arbitrary shell commands, killing them on timeout and 
+ * Simple wrapper script for running arbitrary shell commands, killing them on timeout and
  * performing custom logic just before timeout.
- * 
+ *
  * eg:
  *  sh 'groovy this-script.groovy -t 300 -c "./gradlew some tasks" -k "killall -3 java"
  *}*
@@ -14,7 +14,7 @@ def cli = new CliBuilder(usage: '*.groovy -[ck] ')
 cli.with {
     t longOpt: 'timeout', args: 1, 'Timeout in seconds'
     c longOpt: 'command', args: 1, argName: 'command', 'Command to execute'
-    k longOpt: 'on-kill-command', args: 1, argName: 'onKillCommand', 'Command to execute when killed.  Defaults to JPS analysis'
+    k longOpt: 'before-kill-command', args: 1, argName: 'command', 'Command to execute before killing the executing command.  Defaults to JPS analysis'
 }
 
 options = cli.parse(args)
@@ -92,7 +92,7 @@ def runJPS() {
 
 
 
-def code = executeAndShowStreamingOutput(options.c.split(' '))
+def code = executeAndShowStreamingOutput(options.c.split())
 println "${NAME}: Main execution finished with code: ${code}"
 if (timeoutOccurred) {
     println "${NAME}: Execution was aborted due to timeout"
