@@ -246,6 +246,21 @@ Jenkins.instance.items.findAll{job ->  job instanceof Job && job.name.startsWith
 
 
 /**
+ * Move disabled top-level non-pipeline jobs to a subfolder
+ */
+def jenkins = Jenkins.instance
+
+def FOLDER_NAME = 'Archive'
+def folder = jenkins.getItemByFullName(FOLDER_NAME)
+
+jenkins.getItems(Job.class).findAll{job -> job.isDisabled()}.each{job ->
+	println job.fullName
+  Items.move(job, folder)
+}.size()
+
+
+
+/**
  * Generate a cleanup script to remove orphaned "builds" subdirectories in disabled jobs.
  * Results can be pasted into a shell.  Threshold is in the if statement.
  * This script assumes that all jenkins builds have already been properly deleted for the affected jobs, and it 
