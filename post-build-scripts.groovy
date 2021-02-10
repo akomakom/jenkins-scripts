@@ -1,5 +1,5 @@
 /**
- * Scripts that make sense in the context of the jenkins global-pre-script plugin
+ * Scripts that make sense in the context of the jenkins global-post-script plugin
  */
  
  
