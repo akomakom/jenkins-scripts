@@ -4,7 +4,8 @@
  
  
 /** 
- * Determine node(s) used by the build that just ran (and trigger some other job with the node as a paremeter) 
+ * Determine node(s) used by the build that just ran, whether it was a normal or pipeline job.
+ * (and trigger some other job with the node as a paremeter) 
  *   This is useful for post-build cleanup
  */
  
