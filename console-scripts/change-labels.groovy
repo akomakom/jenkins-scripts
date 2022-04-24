@@ -3,7 +3,7 @@
 /**
  * Change all jobs tied to a deprecated label to a new label (for simple labels)
  */
-Jenkins.instance.items.findAll{job ->  job instanceof Job  && job.assignedLabel?.expression == 'OLDLABEL'}.each{
+Jenkins.instance.getAllItems(Job).findAll{job -> job.assignedLabel?.expression == 'OLDLABEL'}.each{
     job ->
 
         println "${job.assignedLabel}: ${job.assignedLabel?.class}"

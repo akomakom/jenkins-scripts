@@ -5,7 +5,7 @@
 def count = 0
 def buildWarning = 30 //anything over 30 is considered suspicious
 
-Jenkins.instance.items.findAll{job ->  job instanceof Job }.each{
+Jenkins.instance.getAllItems(Job).each{
     job ->
         count++
         //println("\nBegin Processing ${job.name} (${job.class}")

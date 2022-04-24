@@ -15,7 +15,7 @@ import hudson.*;
 
 
 def count = 0
-Jenkins.instance.items.findAll{job ->  job instanceof FreeStyleProject && !job.isDisabled() }.each{
+Jenkins.instance.getAllItems(FreeStyleProject.class).findAll{job -> !job.isDisabled() }.each{
 job ->
   count++
     //println("\nBegin Processing ${job.name} (${job.class}")
@@ -50,7 +50,7 @@ def credentialsId = 'some-cred-id-string'
 def svnHostname = 'svn.hostname.for.your.company'
 
 def count = 0
-selectFrom.findAll{job -> job instanceof AbstractProject && !job.isDisabled() && job.scm instanceof hudson.scm.SubversionSCM }.each{ job ->
+Jenkins.instance.getAllItems(AbstractProject).findAll{job -> !job.isDisabled() && job.scm instanceof hudson.scm.SubversionSCM }.each{ job ->
   
   job.scm.locations.findAll { loc ->  
     try { loc.SVNURL.host.startsWith(svnHostname) && (loc.credentialsId == null || loc.credentialsId == '') } catch (Exception x) { return false } 
@@ -109,7 +109,7 @@ true
  * This script assumes that all jenkins builds have already been properly deleted for the affected jobs, and it 
  * suggests that you blindly remove any subdirectories named "builds" (which are sometimes orphaned)
  */
- Jenkins.instance.items.findAll{job -> job instanceof Job && job.isDisabled()}.each{job ->
+Jenkins.instance.getAllItems(Job).findAll{job -> job.isDisabled()}.each{job ->
 //  println "Job ${job.fullName}"
    result =  "du -s /data/jenkins/jobs/${job.fullName}".execute().text
    parts = result.tokenize()
